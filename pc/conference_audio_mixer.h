@@ -27,7 +27,7 @@ public:
 
     void ClearReceivers();
 
-    /*int32_t*/webrtc::AudioFrame* Mix(/*void* output_buffer*/);
+    webrtc::AudioFrame* Mix();
 
     bool AddRecordedData(int32_t ssrc, const void* data, int32_t size);
 
