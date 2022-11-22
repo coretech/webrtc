@@ -350,11 +350,6 @@ AudioMixer::Source::AudioFrameInfo ChannelReceive::GetAudioFrameWithInfo(
     return AudioMixer::Source::AudioFrameInfo::kError;
   }
 
-  /*if (muted) {
-      RTC_LOG(LS_INFO) << "MUTEEEEEEED!!!!!!!!!";
-  } else {
-      RTC_LOG(LS_INFO) << "NIJE MUTED!!!!!!!!!";
-  }*/
   if (muted) {
     // TODO(henrik.lundin): We should be able to do better than this. But we
     // will have to go through all the cases below where the audio samples may
