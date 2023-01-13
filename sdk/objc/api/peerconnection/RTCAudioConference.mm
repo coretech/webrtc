@@ -14,4 +14,12 @@
     ConferenceModule::GetInstance()->Unmerge();
 }
 
+- (void)mute {
+    ConferenceModule::GetInstance()->Mute();
+}
+
+- (void)unmute {
+    ConferenceModule::GetInstance()->Unmute();
+}
+
 @end

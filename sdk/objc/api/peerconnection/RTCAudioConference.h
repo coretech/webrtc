@@ -15,6 +15,12 @@ RTC_OBJC_EXPORT
 /** Unmerges all call from an audio conference. */
 - (void)unmerge;
 
+/** Mutes conference holder. */
+- (void)mute;
+
+/** Unmutes conference holder. */
+- (void)unmute;
+
 @end
 
 NS_ASSUME_NONNULL_END
