@@ -451,6 +451,14 @@ public class PeerConnectionFactory {
     nativeUnmerge();
   }
 
+  public void mute() {
+    nativeMute();
+  }
+
+  public void unmute() {
+    nativeUnmute();
+  }
+
   /**
    * Create video source with given parameters. If alignTimestamps is false, the caller is
    * responsible for aligning the frame timestamps to rtc::TimeNanos(). This can be used to achieve
@@ -639,4 +647,7 @@ public class PeerConnectionFactory {
   private static native boolean nativeMerge();
   private static native boolean nativeUnmerge();
   private static native boolean nativeIsMerged();
+  private static native boolean nativeMute();
+  private static native boolean nativeUnmute();
+  private static native boolean nativeIsMuted();
 }

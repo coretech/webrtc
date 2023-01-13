@@ -399,6 +399,18 @@ static jboolean JNI_PeerConnectionFactory_IsMerged(JNIEnv* jni) {
   return ConferenceModule::GetInstance()->IsMerged();
 }
 
+static jboolean JNI_PeerConnectionFactory_Mute(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->Mute();
+}
+
+static jboolean JNI_PeerConnectionFactory_Unmute(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->Unmute();
+}
+
+static jboolean JNI_PeerConnectionFactory_IsMuted(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->IsMuted();
+}
+
 static jlong JNI_PeerConnectionFactory_CreateLocalMediaStream(
     JNIEnv* jni,
     jlong native_factory,

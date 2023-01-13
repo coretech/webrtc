@@ -149,6 +149,10 @@ int32_t AudioTransportImpl::RecordedDataIsAvailable(
     }
   }
 
+  if (ConferenceModule::GetInstance()->IsMerged() && ConferenceModule::GetInstance()->IsMuted()) {
+    audio_frame->Mute();
+  }
+
   if (!ConferenceModule::GetInstance()->IsMerged()) {
     // Copy frame and push to each sending stream. The copy is required since an
     // encoding task will be posted internally to each stream.

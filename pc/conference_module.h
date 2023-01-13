@@ -17,6 +17,7 @@ private:
 
     static ConferenceModule* instance_;
     bool is_merged_ = false;
+    bool is_muted_ = false;
     int32_t output_sample_rate_;
     int32_t output_channel_num_;
     int32_t frame_duration_ms_;
@@ -110,6 +111,20 @@ public:
 
     bool IsMerged() {
         return is_merged_;
+    }
+
+    bool Mute() {
+        is_muted_ = true;
+        return true;
+    }
+
+    bool Unmute() {
+        is_muted_ = false;
+        return true;
+    }
+
+    bool IsMuted() {
+        return is_muted_;
     }
 
     void AddLocalData(uint32_t send_stream_ssrc, const void* data, int32_t size) {
