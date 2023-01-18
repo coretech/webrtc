@@ -46,6 +46,9 @@
 #include "sdk/android/src/jni/pc/video.h"
 #include "system_wrappers/include/field_trial.h"
 
+#include "rtc_base/logging.h"
+#include "pc/conference_module.h"
+
 namespace webrtc {
 namespace jni {
 
@@ -382,6 +385,30 @@ static void JNI_PeerConnectionFactory_FreeFactory(JNIEnv*,
   delete reinterpret_cast<OwnedFactoryAndThreads*>(j_p);
   field_trial::InitFieldTrialsFromString(nullptr);
   GetStaticObjects().field_trials_init_string = nullptr;
+}
+
+static jboolean JNI_PeerConnectionFactory_Merge(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->Merge();
+}
+
+static jboolean JNI_PeerConnectionFactory_Unmerge(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->Unmerge();
+}
+
+static jboolean JNI_PeerConnectionFactory_IsMerged(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->IsMerged();
+}
+
+static jboolean JNI_PeerConnectionFactory_Mute(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->Mute();
+}
+
+static jboolean JNI_PeerConnectionFactory_Unmute(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->Unmute();
+}
+
+static jboolean JNI_PeerConnectionFactory_IsMuted(JNIEnv* jni) {
+  return ConferenceModule::GetInstance()->IsMuted();
 }
 
 static jlong JNI_PeerConnectionFactory_CreateLocalMediaStream(

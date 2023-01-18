@@ -23,6 +23,10 @@
 #include "rtc_base/ref_counted_object.h"
 #include "rtc_base/thread.h"
 
+#include "pc/conference_module.h"
+#include "pc/conference_mixer_source.h"
+#include "pc/conference_receive_audio_sink.h"
+
 namespace webrtc {
 namespace internal {
 
@@ -62,6 +66,15 @@ void AudioState::AddReceivingStream(webrtc::AudioReceiveStream* stream) {
     RTC_DLOG(LS_ERROR) << "Failed to add source to mixer.";
   }
 
+  internal::AudioReceiveStream* receive_stream = static_cast<internal::AudioReceiveStream*>(stream);
+  const webrtc::internal::AudioSendStream* send_stream = receive_stream->GetAssociatedSendStreamForTesting();
+
+  if (send_stream != nullptr) {
+    uint32_t ssrc = send_stream->GetConfig().rtp.ssrc;
+    receive_stream->SetAudioConferenceSink(new ConferenceReceiveAudioSink(ssrc));
+    ConferenceModule::GetInstance()->AddStream(ssrc);
+  }
+
   // Make sure playback is initialized; start playing if enabled.
   UpdateNullAudioPollerState();
   auto* adm = config_.audio_device_module.get();
@@ -77,6 +90,16 @@ void AudioState::AddReceivingStream(webrtc::AudioReceiveStream* stream) {
 }
 
 void AudioState::RemoveReceivingStream(webrtc::AudioReceiveStream* stream) {
+  internal::AudioReceiveStream* receive_stream = static_cast<internal::AudioReceiveStream*>(stream);
+  const webrtc::internal::AudioSendStream* send_stream = receive_stream->GetAssociatedSendStreamForTesting();
+
+  if (send_stream != nullptr) {
+    uint32_t ssrc = send_stream->GetConfig().rtp.ssrc;
+
+    ConferenceModule::GetInstance()->RemoveStream(ssrc);
+    receive_stream->RemoveAudioConferenceSink();
+  }
+
   RTC_DCHECK(thread_checker_.IsCurrent());
   auto count = receiving_streams_.erase(stream);
   RTC_DCHECK_EQ(1, count);
