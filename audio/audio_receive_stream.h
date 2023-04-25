@@ -99,6 +99,8 @@ class AudioReceiveStream final : public webrtc::AudioReceiveStream,
   webrtc::AudioReceiveStream::Stats GetStats(
       bool get_and_clear_legacy_stats) const override;
   void SetSink(AudioSinkInterface* sink) override;
+  void SetAudioConferenceSink(AudioSinkInterface* sink);
+  void RemoveAudioConferenceSink();
   void SetGain(float gain) override;
   bool SetBaseMinimumPlayoutDelayMs(int delay_ms) override;
   int GetBaseMinimumPlayoutDelayMs() const override;

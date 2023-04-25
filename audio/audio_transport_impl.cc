@@ -20,6 +20,9 @@
 #include "modules/async_audio_processing/async_audio_processing.h"
 #include "modules/audio_processing/include/audio_frame_proxies.h"
 #include "rtc_base/checks.h"
+#include "rtc_base/logging.h"
+#include "pc/conference_module.h"
+#include "audio/audio_send_stream.h"
 
 namespace webrtc {
 
@@ -98,6 +101,7 @@ AudioTransportImpl::AudioTransportImpl(
               : nullptr),
       mixer_(mixer) {
   RTC_DCHECK(mixer);
+  ConferenceModule::GetInstance()->Config((int32_t)send_sample_rate_hz_, (int32_t)send_num_channels_, 10);
 }
 
 AudioTransportImpl::~AudioTransportImpl() {}
@@ -164,6 +168,10 @@ int32_t AudioTransportImpl::RecordedDataIsAvailable(
     typing_noise_detected_ = typing_detected;
   }
 
+  if (ConferenceModule::GetInstance()->IsMerged() && ConferenceModule::GetInstance()->IsMuted()) {
+    audio_frame->Mute();
+  }
+
   RTC_DCHECK_GT(audio_frame->samples_per_channel_, 0);
   if (async_audio_processing_)
     async_audio_processing_->Process(std::move(audio_frame));
@@ -176,18 +184,68 @@ int32_t AudioTransportImpl::RecordedDataIsAvailable(
 void AudioTransportImpl::SendProcessedData(
     std::unique_ptr<AudioFrame> audio_frame) {
   RTC_DCHECK_GT(audio_frame->samples_per_channel_, 0);
-  MutexLock lock(&capture_lock_);
-  if (audio_senders_.empty())
-    return;
+  if (!ConferenceModule::GetInstance()->IsMerged()) {
+    MutexLock lock(&capture_lock_);
+    if (audio_senders_.empty())
+      return;
 
-  auto it = audio_senders_.begin();
-  while (++it != audio_senders_.end()) {
-    auto audio_frame_copy = std::make_unique<AudioFrame>();
-    audio_frame_copy->CopyFrom(*audio_frame);
-    (*it)->SendAudioData(std::move(audio_frame_copy));
+    auto it = audio_senders_.begin();
+    while (++it != audio_senders_.end()) {
+      auto audio_frame_copy = std::make_unique<AudioFrame>();
+      audio_frame_copy->CopyFrom(*audio_frame);
+      (*it)->SendAudioData(std::move(audio_frame_copy));
+    }
+    // Send the original frame to the first stream w/o copying.
+    (*audio_senders_.begin())->SendAudioData(std::move(audio_frame));
+
+    return;
   }
-  // Send the original frame to the first stream w/o copying.
-  (*audio_senders_.begin())->SendAudioData(std::move(audio_frame));
+
+  {
+    std::unique_ptr<AudioFrame> audio_frame_copy(new AudioFrame());
+    audio_frame_copy->CopyFrom(*audio_frame);
+
+    const size_t length = audio_frame_copy.get()->samples_per_channel() * audio_frame_copy.get()->num_channels();
+    const int32_t size = sizeof(int16_t) * length;
+
+    {
+      MutexLock lock(&capture_lock_);
+      if (!audio_senders_.empty()) {
+        auto it = audio_senders_.begin();
+        while (++it != audio_senders_.end()) {
+
+          internal::AudioSendStream* send_stream = static_cast<internal::AudioSendStream*>(*it);
+          uint32_t send_stream_ssrc = send_stream->GetConfig().rtp.ssrc;
+
+          ConferenceModule::GetInstance()->AddLocalData(send_stream_ssrc, audio_frame_copy.get()->data(), size);
+          AudioFrame* mixed_frame = ConferenceModule::GetInstance()->Mix(send_stream_ssrc);
+
+          if (mixed_frame) {
+            std::unique_ptr<AudioFrame> audio_mixed_frame_copy(new AudioFrame());
+            audio_mixed_frame_copy->CopyFrom(*mixed_frame);
+
+            std::unique_ptr<AudioFrame> audio_frame_copy(new AudioFrame());
+            audio_frame_copy->CopyFrom(*audio_mixed_frame_copy);
+
+            (*it)->SendAudioData(std::move(audio_frame_copy));
+          }
+        }
+
+        internal::AudioSendStream* send_stream = static_cast<internal::AudioSendStream*>(*audio_senders_.begin());
+        uint32_t send_stream_ssrc = send_stream->GetConfig().rtp.ssrc;
+
+        ConferenceModule::GetInstance()->AddLocalData(send_stream_ssrc, audio_frame_copy.get()->data(), size);
+        AudioFrame* mixed_frame = ConferenceModule::GetInstance()->Mix(send_stream_ssrc);
+
+        if (mixed_frame) {
+          std::unique_ptr<AudioFrame> audio_mixed_frame_copy(new AudioFrame());
+          audio_mixed_frame_copy->CopyFrom(*mixed_frame);
+          // Send the original frame to the first stream w/o copying.
+          (*audio_senders_.begin())->SendAudioData(std::move(audio_mixed_frame_copy));
+        }
+      }
+    }
+  }
 }
 
 // Mix all received streams, feed the result to the AudioProcessing module, then

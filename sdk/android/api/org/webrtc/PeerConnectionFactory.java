@@ -432,6 +432,22 @@ public class PeerConnectionFactory {
     return new MediaStream(nativeCreateLocalMediaStream(nativeFactory, label));
   }
 
+  public void merge() {
+    nativeMerge();
+  }
+
+  public void unmerge() {
+    nativeUnmerge();
+  }
+
+  public void mute() {
+    nativeMute();
+  }
+
+  public void unmute() {
+    nativeUnmute();
+  }
+
   /**
    * Create video source with given parameters. If alignTimestamps is false, the caller is
    * responsible for aligning the frame timestamps to rtc::TimeNanos(). This can be used to achieve
@@ -617,4 +633,10 @@ public class PeerConnectionFactory {
   private static native void nativeDeleteLoggable();
   private static native void nativePrintStackTrace(int tid);
   private static native void nativePrintStackTracesOfRegisteredThreads();
+  private static native boolean nativeMerge();
+  private static native boolean nativeUnmerge();
+  private static native boolean nativeIsMerged();
+  private static native boolean nativeMute();
+  private static native boolean nativeUnmute();
+  private static native boolean nativeIsMuted();
 }

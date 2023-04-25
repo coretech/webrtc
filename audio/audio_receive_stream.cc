@@ -356,6 +356,16 @@ void AudioReceiveStream::SetSink(AudioSinkInterface* sink) {
   channel_receive_->SetSink(sink);
 }
 
+void AudioReceiveStream::SetAudioConferenceSink(AudioSinkInterface* sink) {
+  RTC_DCHECK_RUN_ON(&worker_thread_checker_);
+  channel_receive_->SetAudioConferenceSink(sink);
+}
+
+void AudioReceiveStream::RemoveAudioConferenceSink() {
+  RTC_DCHECK_RUN_ON(&worker_thread_checker_);
+  channel_receive_->RemoveAudioConferenceSink();
+}
+
 void AudioReceiveStream::SetGain(float gain) {
   RTC_DCHECK_RUN_ON(&worker_thread_checker_);
   channel_receive_->SetChannelOutputVolumeScaling(gain);

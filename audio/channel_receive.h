@@ -89,6 +89,9 @@ class ChannelReceiveInterface : public RtpPacketSinkInterface {
 
   virtual void SetSink(AudioSinkInterface* sink) = 0;
 
+  virtual void SetAudioConferenceSink(AudioSinkInterface* sink) = 0;
+  virtual void RemoveAudioConferenceSink() = 0;
+
   virtual void SetReceiveCodecs(
       const std::map<int, SdpAudioFormat>& codecs) = 0;
 

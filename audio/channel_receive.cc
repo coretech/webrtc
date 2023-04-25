@@ -106,6 +106,9 @@ class ChannelReceive : public ChannelReceiveInterface,
 
   void SetSink(AudioSinkInterface* sink) override;
 
+  void SetAudioConferenceSink(AudioSinkInterface* sink) override;
+  void RemoveAudioConferenceSink() override;
+
   void SetReceiveCodecs(const std::map<int, SdpAudioFormat>& codecs) override;
 
   // API methods
@@ -247,6 +250,7 @@ class ChannelReceive : public ChannelReceiveInterface,
   // The AcmReceiver is thread safe, using its own lock.
   acm2::AcmReceiver acm_receiver_;
   AudioSinkInterface* audio_sink_ = nullptr;
+  AudioSinkInterface* audio_conference_sink_ = nullptr;
   AudioLevel _outputAudioLevel;
 
   Clock* const clock_;
@@ -413,6 +417,14 @@ AudioMixer::Source::AudioFrameInfo ChannelReceive::GetAudioFrameWithInfo(
           audio_frame->sample_rate_hz_, audio_frame->num_channels_,
           audio_frame->timestamp_);
       audio_sink_->OnData(data);
+    }
+
+    if (audio_conference_sink_) {
+      AudioSinkInterface::Data data(
+          audio_frame->data(), audio_frame->samples_per_channel_,
+          audio_frame->sample_rate_hz_, audio_frame->num_channels_,
+          audio_frame->timestamp_);
+      audio_conference_sink_->OnData(data);
     }
   }
 
@@ -599,6 +611,21 @@ void ChannelReceive::SetSink(AudioSinkInterface* sink) {
   RTC_DCHECK_RUN_ON(&worker_thread_checker_);
   MutexLock lock(&callback_mutex_);
   audio_sink_ = sink;
+}
+
+void ChannelReceive::SetAudioConferenceSink(AudioSinkInterface* sink) {
+  RTC_DCHECK_RUN_ON(&worker_thread_checker_);
+  MutexLock lock(&callback_mutex_);
+  audio_conference_sink_ = sink;
+}
+
+void ChannelReceive::RemoveAudioConferenceSink() {
+  RTC_DCHECK_RUN_ON(&worker_thread_checker_);
+  MutexLock lock(&callback_mutex_);
+  if (audio_conference_sink_) {
+    delete audio_conference_sink_;
+    audio_conference_sink_ = nullptr;
+  }
 }
 
 void ChannelReceive::StartPlayout() {
