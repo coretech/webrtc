@@ -257,6 +257,11 @@ RTC_OBJC_EXPORT
                   active:(BOOL)active
                    error:(NSError **)outError;
 
+- (BOOL)setConfiguration:(RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *)configuration
+                  active:(BOOL)active
+                   error:(NSError **)outError
+                   leaveAudioModeUnchanged:(BOOL)leaveAudioModeUnchanged;
+
 @end
 
 NS_ASSUME_NONNULL_END

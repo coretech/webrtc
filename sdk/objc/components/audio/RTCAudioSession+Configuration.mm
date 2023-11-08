@@ -21,7 +21,8 @@
   return [self setConfiguration:configuration
                          active:NO
                 shouldSetActive:NO
-                          error:outError];
+                          error:outError
+                leaveAudioModeUnchanged: NO];
 }
 
 - (BOOL)setConfiguration:(RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *)configuration
@@ -30,7 +31,19 @@
   return [self setConfiguration:configuration
                          active:active
                 shouldSetActive:YES
-                          error:outError];
+                          error:outError
+                leaveAudioModeUnchanged: NO];
+}
+
+- (BOOL)setConfiguration:(RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *)configuration
+                  active:(BOOL)active
+                   error:(NSError **)outError
+                   leaveAudioModeUnchanged:(BOOL)leaveAudioModeUnchanged {
+  return [self setConfiguration:configuration
+                         active:active
+                shouldSetActive:YES
+                          error:outError
+                leaveAudioModeUnchanged: leaveAudioModeUnchanged];
 }
 
 #pragma mark - Private
@@ -38,7 +51,8 @@
 - (BOOL)setConfiguration:(RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *)configuration
                   active:(BOOL)active
          shouldSetActive:(BOOL)shouldSetActive
-                   error:(NSError **)outError {
+                   error:(NSError **)outError
+         leaveAudioModeUnchanged:(BOOL)leaveAudioModeUnchanged {
   NSParameterAssert(configuration);
   if (outError) {
     *outError = nil;
@@ -63,14 +77,21 @@
     }
   }
 
+  RTCLog(@"Self mode is: %@", self.mode);
+  RTCLog(@"Configuration mode is: %@", configuration.mode);
+
   if (self.mode != configuration.mode) {
-    NSError *modeError = nil;
-    if (![self setMode:configuration.mode error:&modeError]) {
-      RTCLogError(@"Failed to set mode: %@",
-                  modeError.localizedDescription);
-      error = modeError;
+    if (!leaveAudioModeUnchanged) {
+      NSError *modeError = nil;
+      if (![self setMode:configuration.mode error:&modeError]) {
+        RTCLogError(@"Failed to set mode: %@",
+                    modeError.localizedDescription);
+        error = modeError;
+      } else {
+        RTCLog(@"Set mode to: %@", configuration.mode);
+      }
     } else {
-      RTCLog(@"Set mode to: %@", configuration.mode);
+      RTCLog(@"Leaving audio mode unchanged: %@", self.mode);
     }
   }
 
